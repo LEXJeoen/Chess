@@ -3,15 +3,20 @@ import sys
 import pygame.freetype
 import math
 
-game_start = False
-num_chess = 0
+size = (1000, 800)  # 游戏窗体大小
+if_game_start = False  # 游戏是否开始
+num_chess = 0  # 对局双方累计下棋数
 black = (0, 0, 0)
 white = (255, 255, 255)
-color_button = (255, 0, 0)
+red = (255, 0, 0)
 
-pos_board = [40, 40, 720, 720]
-pos_startGame_button = [350, 400, 200, 75]
-pos_endGame_button = [350, 500, 200, 75]
+pos_board = [40, 40, 720, 720]  # 棋盘位置
+pos_startGame_button = [400, 400, 200, 75]  # “开始游戏” 按钮框体位置
+pos_endGame_button = [400, 550, 200, 75]  # “结束游戏” 按钮框体位置
+
+pos_text_title = (200, 120)  # “围棋” 文字位置
+pos_text_startGame = (410, 410)  # “开始游戏” 文字位置
+pos_text_endGame = (410, 560)  # “结束游戏” 文字位置
 
 
 # 判断鼠标是否点击指定范围内
@@ -56,8 +61,8 @@ def fix_pieces_pos(pos):
 
 # 开始对局并初始化对局几面
 def start_game(screen):
-    global game_start
-    game_start = True
+    global if_game_start
+    if_game_start = True
     chessBoard = pygame.image.load('GameData/img/board.png')
     screen.blit(chessBoard, [0, 0, 800, 802])
 
@@ -75,7 +80,7 @@ def chess(screen, pos):
 # 处理鼠标点击事件
 def deal_mouse_event(screen, event):
     if event.button == 1:  # 左键点击
-        if not game_start:  # 未开始对局
+        if not if_game_start:  # 未开始对局
             if is_in_area(event.pos, pos_endGame_button):  # 点击“结束游戏”按钮
                 sys.exit()
             elif is_in_area(event.pos, pos_startGame_button):  # 点击“开始游戏”按钮
@@ -88,26 +93,26 @@ def deal_mouse_event(screen, event):
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((900, 800))  # 设置窗口大小（宽度，高度）
+    screen = pygame.display.set_mode(size)  # 设置窗口大小（宽度，高度）
     screen_rect = screen.get_rect()  # 初始化主图层全区域
     pygame.display.set_caption("围棋")  # 设置标题
     # 初始化背景
     bg = pygame.image.load('GameData/img/background.png')
     screen.blit(bg, screen_rect)
     # 绘制标题界面
-    pygame.draw.rect(screen, color_button, pos_startGame_button, 5)  # 绘制按钮框体
-    pygame.draw.rect(screen, color_button, pos_endGame_button, 5)
+    pygame.draw.rect(screen, red, pos_startGame_button, 5)  # 绘制按钮框体
+    pygame.draw.rect(screen, red, pos_endGame_button, 5)
 
     font_title = pygame.font.Font('GameData/Font/HGDGY_CNKI.TTF', 180)  # 设置字体的类型和大小
     font_button = pygame.font.Font('GameData/Font/STXINGKA.TTF', 45)
 
     text_title = font_title.render("围    棋", True, black)
-    text_startGame = font_button.render("开始游戏", True, color_button)  # 绘制文字
-    text_endGame = font_button.render("退出游戏", True, color_button)
+    text_startGame = font_button.render("开始游戏", True, red)  # 绘制文字，和blit()搭配使用
+    text_endGame = font_button.render("退出游戏", True, red)
 
-    screen.blit(text_title, (180, 120))
-    screen.blit(text_startGame, (360, 410))
-    screen.blit(text_endGame, (360, 510))
+    screen.blit(text_title, pos_text_title)  # 绘制“围棋”
+    screen.blit(text_startGame, pos_text_startGame)  # 绘制“开始游戏”
+    screen.blit(text_endGame, pos_text_endGame)  # 绘制“结束游戏”
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
