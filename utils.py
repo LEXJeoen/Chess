@@ -16,13 +16,15 @@ class Point(namedtuple('Point', 'row col')):
 
 
 class Move():  # <1>
-    def __init__(self, point=None, is_restart=False, is_pass=False, is_resign=False):
-        assert (point is not None) ^ is_restart ^ is_pass ^ is_resign
+    def __init__(self, point=None, is_restart=False,  is_regret=False, is_pass=False, is_resign=False, is_turn_back=False):
+        assert (point is not None) ^ is_restart ^ is_regret ^ is_pass ^ is_resign ^ is_turn_back
         self.point = point
         self.is_play = (self.point is not None)
         self.is_restart = is_restart
+        self.is_regret = is_regret
         self.is_pass = is_pass
         self.is_resign = is_resign
+        self.is_turn_back = is_turn_back
 
     @classmethod
     def play(cls, point):  # <2>
@@ -33,12 +35,20 @@ class Move():  # <1>
         return Move(is_restart=True)
 
     @classmethod
+    def regret(cls):  # <3>
+        return Move(is_regret=True)
+
+    @classmethod
     def pass_turn(cls):  # <3>
         return Move(is_pass=True)
 
     @classmethod
     def resign(cls):  # <4>
         return Move(is_resign=True)
+
+    @classmethod
+    def turn_back(cls):  # <4>
+        return Move(is_turn_back=True)
 
 
 class GoString():

@@ -2,7 +2,7 @@ import pygame
 import pygame.freetype
 
 from Players import Player
-from Board import Board
+from goBoard import Board
 from utils import Point
 
 size = (1000, 800)  # 游戏窗体大小
@@ -24,6 +24,7 @@ pos_restart_button = [805, 170, 165, 60]  # “重新开始” 按钮框体位�
 pos_regret_button = [805, 270, 165, 60]  # “悔棋” 按钮框体位置
 pos_pass_button = [805, 370, 165, 60]  # “过棋” 按钮框体位置
 pos_resign_button = [805, 470, 165, 60]  # “认输” 按钮框体位置
+pos_turn_back_button = [850, 570, 70, 70]  # 返回按钮位置
 
 pos_text_title = (200, 120)  # “围棋” 文字位置
 pos_text_startGame = (410, 410)  # “开始游戏” 文字位置
@@ -41,6 +42,7 @@ pos_black_win = [0, 300, 500, 500]  # 黑方胜利图片
 
 bg = pygame.image.load('GameData/img/background.png')  # 背景图片
 chessBoard = pygame.image.load('GameData/img/board.png')  # 棋盘
+turn_back = pygame.image.load('GameData/img/返回按钮.png')
 white_win = pygame.image.load('GameData/img/白棋胜利.png')
 black_win = pygame.image.load('GameData/img/黑棋胜利.png')
 
@@ -58,6 +60,8 @@ def draw_startGame_menu(screen, game_mode):
 
     text_gameMode = font_button.render("重新开始", True, color_button_main_menu)  # 绘制文字，和blit()搭配使用
     screen.blit(text_gameMode, pos_text_restart)  # 绘制“重新开始”
+
+    screen.blit(turn_back,pos_turn_back_button)
 
     if game_mode == 1 or game_mode == 2:
         pygame.draw.rect(screen, color_button_main_menu, pos_regret_button, 5)
@@ -147,27 +151,22 @@ def draw_new_stone(screen, point, player):
 
 
 def draw_stones(board, screen):
-    for r in range(1, board.num_rows):
-        for c in range(1, board.num_cols):
+    # print("start draw")
+    for r in range(1, board.num_rows + 1):
+        for c in range(1, board.num_cols + 1):
             point = Point(row=r, col=c)
             if board.get(point) == Player.black:
+                # print("black", r, c)
                 pos = (point.row * 40, point.col * 40)
                 pygame.draw.circle(screen, black, pos, piece_radius)
             elif board.get(point) == Player.white:
+                # print("white", r, c)
                 pos = (point.row * 40, point.col * 40)
                 pygame.draw.circle(screen, white, pos, piece_radius)
+    # print(" ")
 
 
 # 显示胜利方
-'''
-def show_winner(screen, num_chess):
-    if num_chess % 2 == 0:
-        screen.blit(white_win, pos_white_win)
-    else:
-        screen.blit(black_win, pos_black_win)
-'''
-
-
 def show_winner(winner, screen):
     if winner == Player.black:
         screen.blit(black_win, pos_black_win)
