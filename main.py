@@ -132,7 +132,7 @@ def playGame(screen, event):
 
 
 # 处理鼠标点击事件
-def Handle_event(screen, event, bots):
+def Handle_event(screen, event):
     global if_click_start, game_mode, game
     if event.button == 1:  # 左键点击
         if not if_click_start:  # 未点击开始
@@ -170,7 +170,7 @@ class Game():
         board = Board(19, 19)
         return Game(board, Player.black, None, None)
 
-    def apply_move(self, move):  # <1>
+    def apply_move(self, move):
         if move.is_play:
             next_board = copy.deepcopy(self.board)
             next_board.place_stone(self.next_player, move.point)
@@ -282,12 +282,28 @@ def main():
     while True:
         if game_mode == 3:
 
-            time.sleep(0.3)  # <1>
+            time.sleep(0.3)
 
             bot_move = bots[game.next_player].select_move(game)
             game = game.apply_move(bot_move)
             draw_chessBoard(screen)
             draw_stones(game.board, screen)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        if is_in_area(event.pos, pos_restart_button):  # 点击“重新开始”
+                            move = Move(is_restart=True)
+                            game = game.apply_move(move)
+                            draw_chessBoard(screen)
+                        elif is_in_area(event.pos, pos_turn_back_button):  # 点击返回按钮
+                            move = Move(is_turn_back=True)
+                            game = game.apply_move(move)
+                            select_gameMode(screen)
         else:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -296,7 +312,7 @@ def main():
                     if event.key == pygame.K_ESCAPE:
                         sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    Handle_event(screen, event, bots)
+                    Handle_event(screen, event)
 
         pygame.display.update()  # 刷新屏幕，显示更新
 
