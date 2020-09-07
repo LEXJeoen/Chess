@@ -1,6 +1,10 @@
 import pygame
 import pygame.freetype
 
+from Players import Player
+from Board import Board
+from utils import Point
+
 size = (1000, 800)  # 游戏窗体大小
 piece_radius = 15
 
@@ -19,7 +23,7 @@ pos_AIAndAI_button = [400, 600, 200, 75]  # “机机对局” 按钮框体位�
 pos_restart_button = [805, 170, 165, 60]  # “重新开始” 按钮框体位置
 pos_regret_button = [805, 270, 165, 60]  # “悔棋” 按钮框体位置
 pos_pass_button = [805, 370, 165, 60]  # “过棋” 按钮框体位置
-pos_surrender_button = [805, 470, 165, 60]  # “认输” 按钮框体位置
+pos_resign_button = [805, 470, 165, 60]  # “认输” 按钮框体位置
 
 pos_text_title = (200, 120)  # “围棋” 文字位置
 pos_text_startGame = (410, 410)  # “开始游戏” 文字位置
@@ -30,7 +34,7 @@ pos_text_AIAndAI = (410, 610)  # “机机对局” 文字位置
 pos_text_restart = (805, 180)  # “重新开始” 文字位置
 pos_text_regret = (830, 280)  # “悔棋” 文字位置
 pos_text_pass = (830, 380)  # “过棋” 文字位置
-pos_text_surrender = (830, 480)  # “认输” 文字位置
+pos_text_resign = (830, 480)  # “认输” 文字位置
 
 pos_white_win = [300, 300, 500, 500]  # 白方胜利图片
 pos_black_win = [0, 300, 500, 500]  # 黑方胜利图片
@@ -43,7 +47,6 @@ black_win = pygame.image.load('GameData/img/黑棋胜利.png')
 
 # 绘制棋盘
 def draw_chessBoard(screen):
-    #global chessBoard
     screen.blit(chessBoard, (0, 0))
 
 
@@ -59,7 +62,7 @@ def draw_startGame_menu(screen, game_mode):
     if game_mode == 1 or game_mode == 2:
         pygame.draw.rect(screen, color_button_main_menu, pos_regret_button, 5)
         pygame.draw.rect(screen, color_button_main_menu, pos_pass_button, 5)
-        pygame.draw.rect(screen, color_button_main_menu, pos_surrender_button, 5)
+        pygame.draw.rect(screen, color_button_main_menu, pos_resign_button, 5)
 
         text_regret = font_button.render("悔  棋", True, color_button_main_menu)
         text_pass = font_button.render("过  棋", True, color_button_main_menu)
@@ -67,7 +70,7 @@ def draw_startGame_menu(screen, game_mode):
 
         screen.blit(text_regret, pos_text_regret)  # 绘制“悔棋”
         screen.blit(text_pass, pos_text_pass)  # 绘制“过棋”
-        screen.blit(text_surrender, pos_text_surrender)  # 绘制“认输”
+        screen.blit(text_surrender, pos_text_resign)  # 绘制“认输”
 
 
 # 绘制主界面菜单
@@ -118,14 +121,13 @@ def clear_source(screen, source, sourceType):
         clear_width = 40
         clear_height = 40
         clear_rect = pygame.Rect(clear_left, clear_top, clear_width, clear_height)
-        screen.blit(chessBoard, clear_rect, clear_rect)  # 擦除棋子
+        screen.blit(chessBoard, clear_rect, clear_rect)  # 擦除单个棋子
 
 
 # 绘制主界面
 def draw_main_interface(screen):
     screen_rect = screen.get_rect()  # 获取主图层全区域
     # 初始化背景
-    #global bg
     screen.blit(bg, screen_rect)
 
     font_title = pygame.font.Font('GameData/Font/HGDGY_CNKI.TTF', 180)  # 设置字体的类型和大小
@@ -136,16 +138,38 @@ def draw_main_interface(screen):
 
 
 # 绘制棋子
-def chess(screen, pos, num_chess):
-    if num_chess % 2 == 0:
+def draw_new_stone(screen, point, player):
+    pos = (point.row * 40, point.col * 40)
+    if player == Player.black:
         pygame.draw.circle(screen, black, pos, piece_radius)
     else:
         pygame.draw.circle(screen, white, pos, piece_radius)
 
 
+def draw_stones(board, screen):
+    for r in range(1, board.num_rows):
+        for c in range(1, board.num_cols):
+            point = Point(row=r, col=c)
+            if board.get(point) == Player.black:
+                pos = (point.row * 40, point.col * 40)
+                pygame.draw.circle(screen, black, pos, piece_radius)
+            elif board.get(point) == Player.white:
+                pos = (point.row * 40, point.col * 40)
+                pygame.draw.circle(screen, white, pos, piece_radius)
+
+
 # 显示胜利方
+'''
 def show_winner(screen, num_chess):
     if num_chess % 2 == 0:
         screen.blit(white_win, pos_white_win)
     else:
         screen.blit(black_win, pos_black_win)
+'''
+
+
+def show_winner(winner, screen):
+    if winner == Player.black:
+        screen.blit(black_win, pos_black_win)
+    elif winner == Player.white:
+        screen.blit(white_win, pos_white_win)
