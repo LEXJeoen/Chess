@@ -281,13 +281,15 @@ def main():
 
     while True:
         if game_mode == 3:
+            if not game.is_over():
+                time.sleep(0.3)
 
-            time.sleep(0.3)
-
-            bot_move = bots[game.next_player].select_move(game)
-            game = game.apply_move(bot_move)
-            draw_chessBoard(screen)
-            draw_stones(game.board, screen)
+                bot_move = bots[game.next_player].select_move(game)
+                game = game.apply_move(bot_move)
+                draw_chessBoard(screen)
+                draw_stones(game.board, screen)
+            else:
+                show_winner(game.winner(), screen)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
