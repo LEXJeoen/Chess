@@ -3,20 +3,20 @@ import pygame
 import math
 import random
 
-import Board
+import goBoard
 from utils import Point, Move
 
 
 def is_point_an_eye(board, point, color):
-    if board.get(point) is not None:  # <1>
+    if board.get(point) is not None:
         return False
-    for neighbor in point.neighbors():  # <2>
+    for neighbor in point.neighbors():
         if board.is_on_grid(neighbor):
             neighbor_color = board.get(neighbor)
             if neighbor_color != color:
                 return False
 
-    friendly_corners = 0  # <3>
+    friendly_corners = 0
     off_board_corners = 0
     corners = [
         Point(point.row - 1, point.col - 1),
@@ -32,8 +32,8 @@ def is_point_an_eye(board, point, color):
         else:
             off_board_corners += 1
     if off_board_corners > 0:
-        return off_board_corners + friendly_corners == 4  # <4>
-    return friendly_corners >= 3  # <5>
+        return off_board_corners + friendly_corners == 4
+    return friendly_corners >= 3
 
 
 # define white player as 0
@@ -73,6 +73,7 @@ class Human():
     @staticmethod
     def go_strategy(pos):
         r, c = fix_stone_pos(pos)
+        # print(r,c)
         stone = Point(row=r, col=c)
         return stone
 
