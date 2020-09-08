@@ -3,11 +3,6 @@ from utils import GoString
 
 class Board():
     def __init__(self, num_row, num_col):
-        """
-        self.left = left
-        self.top = top
-         self.grid_size = grid_size
-        """
         self.num_rows = num_row
         self.num_cols = num_col
         self._grid = {}
@@ -18,6 +13,9 @@ class Board():
     def place_stone(self, player, point):
         assert self.is_on_grid(point)
         # print(self.is_on_grid(point))
+        if self._grid.get(point) is not None:
+            print('Illegal play on %s' % str(point))
+            return
         adjacent_same_color = []
         adjacent_opposite_color = []
         liberties = []
@@ -35,13 +33,13 @@ class Board():
                     adjacent_opposite_color.append(neighbor_string)
         new_string = GoString(player, [point], liberties)
 
-        for same_color_string in adjacent_same_color:  # <1>
+        for same_color_string in adjacent_same_color:
             new_string = new_string.merged_with(same_color_string)
         for new_string_point in new_string.stones:
             self._grid[new_string_point] = new_string
-        for other_color_string in adjacent_opposite_color:  # <2>
+        for other_color_string in adjacent_opposite_color:
             other_color_string.remove_liberty(point)
-        for other_color_string in adjacent_opposite_color:  # <3>
+        for other_color_string in adjacent_opposite_color:
             if other_color_string.num_liberties == 0:
                 self._remove_string(other_color_string)
 
