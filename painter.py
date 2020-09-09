@@ -61,7 +61,7 @@ def draw_startGame_menu(screen, game_mode):
     text_gameMode = font_button.render("重新开始", True, color_button_main_menu)  # 绘制文字，和blit()搭配使用
     screen.blit(text_gameMode, pos_text_restart)  # 绘制“重新开始”
 
-    screen.blit(turn_back,pos_turn_back_button)
+    screen.blit(turn_back, pos_turn_back_button)
 
     if game_mode == 1 or game_mode == 2:
         pygame.draw.rect(screen, color_button_main_menu, pos_regret_button, 5)

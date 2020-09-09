@@ -8,13 +8,15 @@ import time
 from goGame import Game
 from painter import *
 from Players import Player, Human, RandomBot
+from mcts import MCTSAgent
 from utils import Point, Move
-
 
 if_click_start = False  # 是否点击开始
 game_mode = 0  # 0是未选择模式；1是双人对战；2是人机对战；3是机机对战
 
 game = None
+
+COLS = 'ABCDEFGHIJKLMNOPQRS'
 
 
 # 判断鼠标是否点击指定范围内
@@ -85,7 +87,6 @@ def playGame(screen, event):
         else:
             show_winner(game.next_player, screen)
     elif game_mode == 2:
-        bot = RandomBot()
         if is_in_area(event.pos, pos_restart_button):  # 点击“重新开始”
             move = Move(is_restart=True)
             game = game.apply_move(move)
@@ -95,38 +96,32 @@ def playGame(screen, event):
             game = game.apply_move(move)
             select_gameMode(screen)
         if not game.is_over():  # 当前对局未结束时以下功能可用
-            if is_in_area(event.pos, pos_board):  # 合法落子
-                if game.next_player == Player.black:
+            if game.next_player == Player.black:
+                if is_in_area(event.pos, pos_board):  # 合法落子
                     point = Human.go_strategy(event.pos)
                     # print(point)
-
                     move = Move.play(point)
-                    if game.is_valid_move(move):
-                        game = game.apply_move(move)
-
-                        move = bot.select_move(game)
-                        game = game.apply_move(move)
-                draw_chessBoard(screen)
-                draw_stones(game.board, screen)
-            elif is_in_area(event.pos, pos_regret_button):  # 点击“悔棋”
-                if game.next_player == Player.black:
-                    move = Move(is_regret=True)
                     if game.is_valid_move(move):
                         game = game.apply_move(move)
                     draw_chessBoard(screen)
                     draw_stones(game.board, screen)
-            elif is_in_area(event.pos, pos_pass_button):  # 点击“过棋”
-                move = Move(is_pass=True)
-                game = game.apply_move(move)
-                move = bot.select_move(game)
-                if game.is_valid_move(move):
+                elif is_in_area(event.pos, pos_regret_button):  # 点击“悔棋”
+                    if game.next_player == Player.black:
+                        move = Move(is_regret=True)
+                        if game.is_valid_move(move):
+                            game = game.apply_move(move)
+                        draw_chessBoard(screen)
+                        draw_stones(game.board, screen)
+                elif is_in_area(event.pos, pos_pass_button):  # 点击“过棋”
+                    move = Move(is_pass=True)
                     game = game.apply_move(move)
-                draw_stones(game.board, screen)
-            elif is_in_area(event.pos, pos_resign_button):  # 点击“认输”
-                move = Move(is_resign=True)
-                game = game.apply_move(move)
-                # print(game.is_over())
-                show_winner(game.next_player, screen)
+                elif is_in_area(event.pos, pos_resign_button):  # 点击“认输”
+                    move = Move(is_resign=True)
+                    game = game.apply_move(move)
+                    # print(game.is_over())
+                    show_winner(game.next_player, screen)
+            else:
+                pass
         else:
             show_winner(game.next_player, screen)
     elif game_mode == 3:
@@ -169,13 +164,28 @@ def main():
 
     global game
     game = Game.new_game()
+    # bot = RandomBot()
+    bot = MCTSAgent(200, temperature=1.3)
+    '''
     bots = {
         Player.black: RandomBot(),
         Player.white: RandomBot(),
     }
+    '''
+    bots = {
+        Player.black: MCTSAgent(100, temperature=1.0),
+        Player.white: MCTSAgent(100, temperature=1.0),
+    }
 
     while True:
-        if game_mode == 3:
+        if game_mode == 2 and game.next_player == Player.white and not game.is_over():
+            print("AI思考中……")
+            move = bot.select_move(game)
+            game = game.apply_move(move)
+            print("AI落子：", COLS[move.point.col - 1], ",", move.point.row)
+            draw_chessBoard(screen)
+            draw_stones(game.board, screen)
+        elif game_mode == 3:
             if not game.is_over():
                 time.sleep(0.3)
 
