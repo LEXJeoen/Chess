@@ -15,7 +15,7 @@ class Point(namedtuple('Point', 'row col')):
         return self
 
 
-class Move():  # <1>
+class Move:  # <1>
     def __init__(self, point=None, is_restart=False,  is_regret=False, is_pass=False, is_resign=False, is_turn_back=False):
         assert (point is not None) ^ is_restart ^ is_regret ^ is_pass ^ is_resign ^ is_turn_back
         self.point = point
@@ -57,6 +57,42 @@ class GoString():
         self.stones = set(stones)
         self.liberties = set(liberties)
 
+    def without_liberty(self, point):  # <2>
+        new_liberties = self.liberties - set([point])
+        return GoString(self.color, self.stones, new_liberties)
+
+    def with_liberty(self, point):
+        new_liberties = self.liberties | set([point])
+        return GoString(self.color, self.stones, new_liberties)
+
+    # <1> `stones` and `liberties` are now immutable `frozenset` instances
+    # <2> The `without_liberty` methods replaces the previous `remove_liberty` method...
+    # <3> ... and `with_liberty` replaces `add_liberty`.
+    # end::fast_go_strings[]
+
+    def merged_with(self, string):
+        """Return a new string containing all stones in both strings."""
+        assert string.color == self.color
+        combined_stones = self.stones | string.stones
+        return GoString(
+            self.color,
+            combined_stones,
+            (self.liberties | string.liberties) - combined_stones)
+
+    @property
+    def num_liberties(self):
+        return len(self.liberties)
+
+    def __eq__(self, other):
+        return isinstance(other, GoString) and \
+               self.color == other.color and \
+               self.stones == other.stones and \
+               self.liberties == other.liberties
+
+    def __deepcopy__(self, memodict={}):
+        return GoString(self.color, self.stones, copy.deepcopy(self.liberties))
+
+    '''
     def remove_liberty(self, point):
         self.liberties.remove(point)
 
@@ -80,3 +116,4 @@ class GoString():
                self.color == other.color and \
                self.stones == other.stones and \
                self.liberties == other.liberties
+    '''

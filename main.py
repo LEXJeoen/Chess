@@ -5,16 +5,18 @@ import math
 import copy
 import time
 
+from goGame import Game
 from painter import *
-from goBoard import *
 from Players import Player, Human, RandomBot
+from mcts import MCTSAgent
 from utils import Point, Move
-from scoring import compute_game_result
 
 if_click_start = False  # 是否点击开始
 game_mode = 0  # 0是未选择模式；1是双人对战；2是人机对战；3是机机对战
 
 game = None
+
+COLS = 'ABCDEFGHIJKLMNOPQRS'
 
 
 # 判断鼠标是否点击指定范围内
@@ -82,9 +84,9 @@ def playGame(screen, event):
                 game = game.apply_move(move)
                 # print(game.is_over())
                 show_winner(game.next_player, screen)
-
+        else:
+            show_winner(game.next_player, screen)
     elif game_mode == 2:
-        bot = RandomBot()
         if is_in_area(event.pos, pos_restart_button):  # 点击“重新开始”
             move = Move(is_restart=True)
             game = game.apply_move(move)
@@ -94,39 +96,34 @@ def playGame(screen, event):
             game = game.apply_move(move)
             select_gameMode(screen)
         if not game.is_over():  # 当前对局未结束时以下功能可用
-            if is_in_area(event.pos, pos_board):  # 合法落子
-                if game.next_player == Player.black:
+            if game.next_player == Player.black:
+                if is_in_area(event.pos, pos_board):  # 合法落子
                     point = Human.go_strategy(event.pos)
                     # print(point)
-
                     move = Move.play(point)
-                    if game.is_valid_move(move):
-                        game = game.apply_move(move)
-
-                        move = bot.select_move(game)
-                        game = game.apply_move(move)
-                draw_chessBoard(screen)
-                draw_stones(game.board, screen)
-            elif is_in_area(event.pos, pos_regret_button):  # 点击“悔棋”
-                if game.next_player == Player.black:
-                    move = Move(is_regret=True)
                     if game.is_valid_move(move):
                         game = game.apply_move(move)
                     draw_chessBoard(screen)
                     draw_stones(game.board, screen)
-            elif is_in_area(event.pos, pos_pass_button):  # 点击“过棋”
-                move = Move(is_pass=True)
-                game = game.apply_move(move)
-                move = bot.select_move(game)
-                if game.is_valid_move(move):
+                elif is_in_area(event.pos, pos_regret_button):  # 点击“悔棋”
+                    if game.next_player == Player.black:
+                        move = Move(is_regret=True)
+                        if game.is_valid_move(move):
+                            game = game.apply_move(move)
+                        draw_chessBoard(screen)
+                        draw_stones(game.board, screen)
+                elif is_in_area(event.pos, pos_pass_button):  # 点击“过棋”
+                    move = Move(is_pass=True)
                     game = game.apply_move(move)
-                draw_stones(game.board, screen)
-            elif is_in_area(event.pos, pos_resign_button):  # 点击“认输”
-                move = Move(is_resign=True)
-                game = game.apply_move(move)
-                # print(game.is_over())
-                show_winner(game.next_player, screen)
-
+                elif is_in_area(event.pos, pos_resign_button):  # 点击“认输”
+                    move = Move(is_resign=True)
+                    game = game.apply_move(move)
+                    # print(game.is_over())
+                    show_winner(game.next_player, screen)
+            else:
+                pass
+        else:
+            show_winner(game.next_player, screen)
     elif game_mode == 3:
         pass
 
@@ -158,113 +155,6 @@ def Handle_event(screen, event):
                 draw_startGame_menu(screen, game_mode)
 
 
-class Game():
-    def __init__(self, board, next_player, previous, move):
-        self.board = board
-        self.next_player = next_player
-        self.previous_state = previous
-        self.last_move = move
-
-    @classmethod
-    def new_game(cls):
-        board = Board(19, 19)
-        return Game(board, Player.black, None, None)
-
-    def apply_move(self, move):
-        if move.is_play:
-            next_board = copy.deepcopy(self.board)
-            next_board.place_stone(self.next_player, move.point)
-
-            return Game(next_board, self.next_player.other, self, move)
-        elif move.is_restart or move.is_turn_back:
-            return Game.new_game()
-        elif move.is_regret:
-            # print("try regret")
-            last_turn = self.previous_state.previous_state
-            return Game(last_turn.board, last_turn.next_player, last_turn.previous_state, last_turn.last_move)
-        elif move.is_resign or move.is_pass:
-            next_board = self.board
-            return Game(next_board, self.next_player.other, self, move)
-
-    def is_move_self_capture(self, player, move):
-        if not move.is_play:
-            return False
-        next_board = copy.deepcopy(self.board)
-        next_board.place_stone(player, move.point)
-        new_string = next_board.get_go_string(move.point)
-        return new_string.num_liberties == 0
-
-    @property
-    def situation(self):
-        return self.next_player, self.board
-
-    def does_move_violate_ko(self, player, move):
-        if not move.is_play:
-            return False
-        next_board = copy.deepcopy(self.board)
-        next_board.place_stone(player, move.point)
-        next_situation = (player.other, next_board)
-        past_state = self.previous_state
-        while past_state is not None:
-            if past_state.situation == next_situation:
-                return True
-            past_state = past_state.previous_state
-        return False
-
-    def if_game_can_regret(self):
-        if self is None or self.previous_state is None or self.previous_state.previous_state is None or self.previous_state.previous_state.previous_state is None:
-            return False
-        else:
-            return True
-
-    def is_valid_move(self, move):  # 操作是否有效
-        if self.is_over():
-            return False
-        if move.is_regret and not self.if_game_can_regret() or self.is_over():
-            return False
-        elif move.is_regret and self.if_game_can_regret() and not self.is_over():
-            return True
-        if move.is_restart or move.is_pass or move.is_resign or move.is_turn_back:
-            return True
-        return (
-                self.board.get(move.point) is None and
-                not self.is_move_self_capture(self.next_player, move) and
-                not self.does_move_violate_ko(self.next_player, move))
-
-    def is_over(self):
-        if self.last_move is None:
-            return False
-        if self.last_move.is_resign:
-            return True
-        second_last_move = self.previous_state.last_move
-        if second_last_move is None:
-            return False
-        return self.last_move.is_pass and second_last_move.is_pass
-
-    def legal_moves(self):  # 所有合法的操作
-        moves = []
-        for row in range(1, self.board.num_rows + 1):
-            for col in range(1, self.board.num_cols + 1):
-                move = Move.play(Point(row, col))
-                if self.is_valid_move(move):
-                    moves.append(move)
-
-        moves.append(Move.pass_turn())
-        moves.append(Move.resign())
-        moves.append(Move.restart())
-        moves.append(Move.turn_back())
-
-        return moves
-
-    def winner(self):
-        if not self.is_over():
-            return None
-        if self.last_move.is_resign:
-            return self.next_player
-        game_result = compute_game_result(self)
-        return game_result.winner
-
-
 def main():
     pygame.init()
     screen = pygame.display.set_mode(size)  # 设置窗口大小（宽度，高度）
@@ -274,13 +164,28 @@ def main():
 
     global game
     game = Game.new_game()
+    # bot = RandomBot()
+    bot = MCTSAgent(200, temperature=1.3)
+    '''
     bots = {
         Player.black: RandomBot(),
         Player.white: RandomBot(),
     }
+    '''
+    bots = {
+        Player.black: MCTSAgent(100, temperature=1.0),
+        Player.white: MCTSAgent(100, temperature=1.0),
+    }
 
     while True:
-        if game_mode == 3:
+        if game_mode == 2 and game.next_player == Player.white and not game.is_over():
+            print("AI思考中……")
+            move = bot.select_move(game)
+            game = game.apply_move(move)
+            print("AI落子：", COLS[move.point.col - 1], ",", move.point.row)
+            draw_chessBoard(screen)
+            draw_stones(game.board, screen)
+        elif game_mode == 3:
             if not game.is_over():
                 time.sleep(0.3)
 
