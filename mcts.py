@@ -15,7 +15,7 @@ class MCTSNode(object):
         }
         self.num_rollouts = 0
         self.children = []
-        self.unvisited_moves = game_state.legal_moves()
+        self.unvisited_moves = game_state.bot_legal_moves()
 
     def add_random_child(self):
         index = random.randint(0, len(self.unvisited_moves) - 1)

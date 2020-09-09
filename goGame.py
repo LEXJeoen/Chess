@@ -90,7 +90,7 @@ class Game:
             return False
         return self.last_move.is_pass and second_last_move.is_pass
 
-    def legal_moves(self):  # 所有合法的操作
+    def man_legal_moves(self):  # 人类所有合法的操作
         moves = []
         for row in range(1, self.board.num_rows + 1):
             for col in range(1, self.board.num_cols + 1):
@@ -102,6 +102,19 @@ class Game:
         moves.append(Move.resign())
         moves.append(Move.restart())
         moves.append(Move.turn_back())
+
+        return moves
+
+    def bot_legal_moves(self):  # AI所有合法的操作
+        moves = []
+        for row in range(1, self.board.num_rows + 1):
+            for col in range(1, self.board.num_cols + 1):
+                move = Move.play(Point(row, col))
+                if self.is_valid_move(move):
+                    moves.append(move)
+
+        moves.append(Move.pass_turn())
+        moves.append(Move.resign())
 
         return moves
 

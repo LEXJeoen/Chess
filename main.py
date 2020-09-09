@@ -165,7 +165,7 @@ def main():
     global game
     game = Game.new_game()
     # bot = RandomBot()
-    bot = MCTSAgent(200, temperature=1.3)
+    bot = MCTSAgent(200, temperature=1.0)
     '''
     bots = {
         Player.black: RandomBot(),
@@ -173,24 +173,33 @@ def main():
     }
     '''
     bots = {
-        Player.black: MCTSAgent(100, temperature=1.0),
-        Player.white: MCTSAgent(100, temperature=1.0),
+        Player.black: MCTSAgent(200, temperature=1.0),
+        Player.white: MCTSAgent(200, temperature=1.0),
     }
 
     while True:
         if game_mode == 2 and game.next_player == Player.white and not game.is_over():
             print("AI思考中……")
-            move = bot.select_move(game)
-            game = game.apply_move(move)
-            print("AI落子：", COLS[move.point.col - 1], ",", move.point.row)
+            bot_move = bot.select_move(game)
+            game = game.apply_move(bot_move)
+            print("AI落子：", COLS[bot_move.point.col - 1], ",", bot_move.point.row)
             draw_chessBoard(screen)
             draw_stones(game.board, screen)
         elif game_mode == 3:
             if not game.is_over():
-                time.sleep(0.3)
-
-                bot_move = bots[game.next_player].select_move(game)
-                game = game.apply_move(bot_move)
+                # time.sleep(0.3)
+                if game.next_player == Player.black:
+                    print("黑方AI思考中……")
+                    bot_move = bots[game.next_player].select_move(game)
+                    game = game.apply_move(bot_move)
+                    if bot_move.is_resign:
+                        print("黑方投降")
+                else:
+                    print("白方AI思考中……")
+                    bot_move = bots[game.next_player].select_move(game)
+                    game = game.apply_move(bot_move)
+                    if bot_move.is_resign:
+                        print("白方投降")
                 draw_chessBoard(screen)
                 draw_stones(game.board, screen)
             else:
